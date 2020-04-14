@@ -57,6 +57,48 @@ const uiController = (function () {
         value: document.querySelector('.add__value').value,
       };
     },
+    addListItem: function (obj, type) {
+      let html, newHtml, element;
+
+      // create html string with placeholder text
+      if (type === 'inc') {
+        element = document.querySelector('.income__list');
+        html = `<div class="item clearfix" id="income-%id%">
+                  <div class="item__description">%description%</div>
+                  <div class="right clearfix">
+                      <div class="item__value">%value%</div>
+                      <div class="item__delete">
+                          <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
+                      </div>
+                  </div>
+              </div>`;
+      } else if (type === 'exp') {
+        element = document.querySelector('.expenses__list');
+        html = `<div class="item clearfix" id="expense-%id%">
+                  <div class="item__description">%description%</div>
+                  <div class="right clearfix">
+                      <div class="item__value">%value%</div>
+                      <div class="item__percentage">21%</div>
+                      <div class="item__delete">
+                          <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
+                      </div>
+                  </div>
+              </div>`;
+      }
+      newHtml = html.replace('%id%', obj.id);
+      newHtml = newHtml.replace('%description%', obj.description);
+      newHtml = newHtml.replace('%value%', obj.value);
+
+      element.insertAdjacentHTML('beforeend', newHtml);
+    },
+    clearFields: function () {
+      let fields = document.querySelectorAll('.add__description, .add__value');
+      let fieldsArr = Array.prototype.slice.call(fields);
+      fieldsArr.forEach(function (cur) {
+        cur.value = '';
+      });
+      fieldsArr[0].focus();
+    },
   };
 })();
 
@@ -73,13 +115,15 @@ const controller = (function (budgetCtrl, uiCtrl) {
   // get data
   const ctrlAddItem = function () {
     const data = uiCtrl.getInput();
-    console.log(typeof data.value);
 
     // add data to budget controller
     const newItem = budgetCtrl.addItem(data.type, data.description, data.value);
 
-    console.log(newItem);
     // add item to ui
+    uiCtrl.addListItem(newItem, data.type);
+
+    // clear input fields
+    uiCtrl.clearFields();
   };
 
   // update total budget ui
