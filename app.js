@@ -20,6 +20,17 @@ const budgetController = (function () {
       inc: 0,
       exp: 0,
     },
+    budget: 0,
+    percentage: -1,
+  };
+
+  const calculateTotal = function (type) {
+    let sum = 0;
+    data.allItems[type].forEach(function (cur) {
+      sum += cur.value;
+    });
+
+    data.totals[type] = sum;
   };
 
   return {
@@ -39,11 +50,32 @@ const budgetController = (function () {
       }
 
       data.allItems[type].push(newItem);
-      data.totals[type] += newItem.value;
+      // data.totals[type] += newItem.value;
       return newItem;
     },
     testing: function () {
       return data;
+    },
+    calculateBudget: function () {
+      // calculate total income and expenses
+      calculateTotal('exp');
+      calculateTotal('inc');
+      // calculate budget: income - expenses
+      data.budget = data.totals.inc - data.totals.exp;
+      // expense percent
+      if (data.totals.inc > 0) {
+        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+      } else {
+        data.percentage = -1;
+      }
+    },
+    getBudget: function () {
+      return {
+        budget: data.budget,
+        totalInc: data.totals.inc,
+        totalExp: data.totals.exp,
+        percentage: data.percentage,
+      };
     },
   };
 })();
@@ -54,7 +86,7 @@ const uiController = (function () {
       return {
         type: document.querySelector('.add__type').value,
         description: document.querySelector('.add__description').value,
-        value: document.querySelector('.add__value').value,
+        value: parseFloat(document.querySelector('.add__value').value),
       };
     },
     addListItem: function (obj, type) {
@@ -112,23 +144,31 @@ const controller = (function (budgetCtrl, uiCtrl) {
     });
   };
 
+  const updateBudget = function () {
+    // calculate budget
+    budgetCtrl.calculateBudget();
+    // return the budget
+    const budget = budgetCtrl.getBudget();
+    console.log('budget: ', budget);
+    // update budget UI
+  };
+
   // get data
   const ctrlAddItem = function () {
     const data = uiCtrl.getInput();
+    if (data.description !== '' && !isNaN(data.value) && data.value > 0) {
+      // add data to budget controller
+      const newItem = budgetCtrl.addItem(data.type, data.description, data.value);
 
-    // add data to budget controller
-    const newItem = budgetCtrl.addItem(data.type, data.description, data.value);
+      // add item to ui
+      uiCtrl.addListItem(newItem, data.type);
 
-    // add item to ui
-    uiCtrl.addListItem(newItem, data.type);
+      // clear input fields
+      uiCtrl.clearFields();
 
-    // clear input fields
-    uiCtrl.clearFields();
+      updateBudget();
+    }
   };
-
-  // update total budget ui
-
-  // update budget UI
 
   return {
     init: function () {
