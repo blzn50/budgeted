@@ -53,6 +53,19 @@ const budgetController = (function () {
       // data.totals[type] += newItem.value;
       return newItem;
     },
+    deleteItem: function (type, id) {
+      let ids, index;
+
+      // return array of ids
+      ids = data.allItems[type].map((i) => i.id);
+
+      // search id of item to delete
+      index = ids.indexOf(id);
+
+      if (index !== -1) {
+        data.allItems[type].splice(index, 1);
+      }
+    },
     testing: function () {
       return data;
     },
@@ -95,7 +108,7 @@ const uiController = (function () {
       // create html string with placeholder text
       if (type === 'inc') {
         element = document.querySelector('.income__list');
-        html = `<div class="item clearfix" id="income-%id%">
+        html = `<div class="item clearfix" id="inc-%id%">
                   <div class="item__description">%description%</div>
                   <div class="right clearfix">
                       <div class="item__value">%value%</div>
@@ -106,7 +119,7 @@ const uiController = (function () {
               </div>`;
       } else if (type === 'exp') {
         element = document.querySelector('.expenses__list');
-        html = `<div class="item clearfix" id="expense-%id%">
+        html = `<div class="item clearfix" id="exp-%id%">
                   <div class="item__description">%description%</div>
                   <div class="right clearfix">
                       <div class="item__value">%value%</div>
@@ -122,6 +135,10 @@ const uiController = (function () {
       newHtml = newHtml.replace('%value%', obj.value);
 
       element.insertAdjacentHTML('beforeend', newHtml);
+    },
+    deleteListItem: function (selectorID) {
+      const el = document.getElementById(selectorID);
+      el.parentNode.removeChild(el);
     },
     clearFields: function () {
       let fields = document.querySelectorAll('.add__description, .add__value');
@@ -152,6 +169,7 @@ const controller = (function (budgetCtrl, uiCtrl) {
         ctrlAddItem();
       }
     });
+    document.querySelector('.container').addEventListener('click', ctrlDeleteItem);
   };
 
   const updateBudget = function () {
@@ -159,7 +177,6 @@ const controller = (function (budgetCtrl, uiCtrl) {
     budgetCtrl.calculateBudget();
     // return the budget
     const budget = budgetCtrl.getBudget();
-    console.log('budget: ', budget);
     // update budget UI
     uiCtrl.displayBudget(budget);
   };
@@ -177,6 +194,26 @@ const controller = (function (budgetCtrl, uiCtrl) {
       // clear input fields
       uiCtrl.clearFields();
 
+      updateBudget();
+    }
+  };
+
+  // delete item
+  const ctrlDeleteItem = function (e) {
+    let splitID, type, ID;
+    const itemID = e.target.parentNode.parentNode.parentNode.parentNode.id;
+    if (itemID) {
+      splitID = itemID.split('-');
+      type = splitID[0];
+      ID = parseInt(splitID[1]);
+
+      // delete item from data structure
+      budgetCtrl.deleteItem(type, ID);
+
+      // delete item from UI
+      uiCtrl.deleteListItem(itemID);
+
+      // update the new budget
       updateBudget();
     }
   };
