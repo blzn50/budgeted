@@ -9,6 +9,19 @@ const budgetController = (function () {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
+  };
+
+  Expense.prototype.calcPercent = function (totalIncome) {
+    if (totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
+    }
+  };
+
+  Expense.prototype.getPercent = function () {
+    return this.percentage;
   };
 
   const data = {
@@ -81,6 +94,13 @@ const budgetController = (function () {
       } else {
         data.percentage = -1;
       }
+    },
+    calculatePercentage: function () {
+      data.allItems.exp.forEach((item) => item.calcPercent(data.totals.inc));
+    },
+    getPercentage: function () {
+      var allPercent = data.allItems.exp.map((item) => item.getPercent());
+      return allPercent;
     },
     getBudget: function () {
       return {
@@ -158,6 +178,23 @@ const uiController = (function () {
         document.querySelector('.budget__expenses--percentage').textContent = '---';
       }
     },
+    displayPercentage: function (percentages) {
+      const percentLabel = document.querySelectorAll('.item__percentage');
+
+      const nodeListForEach = function (list, callback) {
+        for (let i = 0; i < list.length; i++) {
+          callback(list[i], i);
+        }
+      };
+
+      nodeListForEach(percentLabel, function (current, index) {
+        if (percentages[index] > 0) {
+          current.textContent = percentages[index] + '%';
+        } else {
+          current.textContent = '---';
+        }
+      });
+    },
   };
 })();
 
@@ -181,6 +218,16 @@ const controller = (function (budgetCtrl, uiCtrl) {
     uiCtrl.displayBudget(budget);
   };
 
+  const updatePercentage = function () {
+    // calculate percent
+    budgetCtrl.calculatePercentage();
+    // read percent from budget
+    const percentages = budgetCtrl.getPercentage();
+    // console.log('percentages: ', percentages);
+    uiCtrl.displayPercentage(percentages);
+    // update ui
+  };
+
   // get data
   const ctrlAddItem = function () {
     const data = uiCtrl.getInput();
@@ -195,6 +242,7 @@ const controller = (function (budgetCtrl, uiCtrl) {
       uiCtrl.clearFields();
 
       updateBudget();
+      updatePercentage();
     }
   };
 
@@ -215,12 +263,12 @@ const controller = (function (budgetCtrl, uiCtrl) {
 
       // update the new budget
       updateBudget();
+      updatePercentage();
     }
   };
 
   return {
     init: function () {
-      console.log('Application has started.');
       setupEventListeners();
       uiCtrl.displayBudget({
         budget: 0,
