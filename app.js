@@ -121,12 +121,21 @@ const uiController = (function () {
     const numSplit = num.split('.');
     let int = numSplit[0];
     const dec = numSplit[1];
+    let sign;
 
     if (int.length > 3) {
       int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3);
     }
 
-    return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
+    if (type === 'inc') {
+      sign = '+';
+    } else if (type === 'exp') {
+      sign = '-';
+    } else {
+      sign = ' ';
+    }
+
+    return sign + ' ' + int + '.' + dec;
   };
 
   const nodeListForEach = function (list, callback) {
@@ -191,7 +200,13 @@ const uiController = (function () {
     },
     displayBudget: function (obj) {
       let type;
-      obj.budget > 0 ? (type = 'inc') : (type = 'exp');
+      if (obj.budget > 0) {
+        type = 'inc';
+      } else if (obj.budget < 0) {
+        type = 'exp';
+      } else {
+        type = ' ';
+      }
       document.querySelector('.budget__value').textContent = formatNumbers(type, obj.budget);
       document.querySelector('.budget__income--value').textContent = formatNumbers(
         'inc',
